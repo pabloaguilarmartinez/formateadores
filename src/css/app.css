@@ -1,0 +1,24 @@
+/* app global css in CSS form */
+.btn {
+  background-color: #002f6c;
+  color: white
+}
+
+.btn:hover {
+  background-color: #225eac;
+  color: white
+}
+
+.btn:active {
+  background-color: #5587c8;
+  color: #002f6c;
+}
+
+.btn:disabled {
+  background-color: #b3c1d3;
+  color: #002f6c;
+}
+
+.bg-bluemarine {
+  background-color: #002F6C;
+}

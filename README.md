@@ -22,9 +22,14 @@ yarn lint
 npm run lint
 ```
 
-### Build the app for production
+### Build the app for production (spa)
 ```bash
 quasar build
+```
+
+### Build the app for production on SSR mode
+```bash
+quasar build -m ssr
 ```
 
 ### Customize the configuration

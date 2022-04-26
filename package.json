@@ -1,20 +1,21 @@
 {
   "name": "formateador-v2",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Formateador para listas de señales de distintos proyectos",
   "productName": "Formateador",
   "author": "Pablo Aguilar Martínez",
   "private": true,
   "scripts": {
+    "dev": "quasar dev",
     "lint": "eslint --ext .js,.vue ./",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "build": "quasar build -m ssr"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
     "core-js": "^3.6.5",
     "exceljs": "^4.3.0",
-    "quasar": "^1.0.0",
-    "xlsx": "^0.18.3"
+    "quasar": "^1.0.0"
   },
   "devDependencies": {
     "@quasar/app": "^2.0.0",

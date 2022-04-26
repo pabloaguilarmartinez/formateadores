@@ -31,7 +31,7 @@
       class="flex q-px-md"
     />
     <q-btn
-      class="bg-bluemarine"
+      class="btn"
       color="text-white"
       label="Formatear"
       @click="loadFile()"
@@ -66,11 +66,20 @@ export default {
       if (this.nombreEdar.val === "") {
         this.nombreEdar.isValid = false;
       }
+      else {
+        this.nombreEdar.isValid = true;
+      }
       if (this.identificador.val === "") {
         this.identificador.isValid = false;
       }
+      else {
+        this.identificador.isValid = true;
+      }
       if (this.file.val === null) {
         this.file.isValid = false;
+      }
+      else {
+        this.file.isValid = true;
       }
     },
     loadFile() {
@@ -80,7 +89,12 @@ export default {
         !this.identificador.isValid ||
         !this.nombreEdar.isValid
       ) {
-        this.error = true;
+        // this.error = true;
+        this.$q.notify({
+          type: 'warning',
+          message: `Rellene todos los campos.`,
+          actions: [{ icon: 'close', color: 'black' }]
+        });
       } else {
         try {
           format(this.file.val, this.nombreEdar.val, this.identificador.val);

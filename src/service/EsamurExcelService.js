@@ -1,8 +1,8 @@
-import Headers from '../constants/Headers';
+import Headers from '../constants/HeadersConfigurador';
 import Plantillas from 'src/constants/MaestroPlantillasEsamur';
 const Excel = require('exceljs');
 
-// Variables globales para recopilar información de procesos y las instancias necesarias para formatear 
+// Variables globales para recopilar información de procesos y las instancias necesarias para formatear
 var arrayProcesos = [];
 var arrayInstancias = [];
 
@@ -13,14 +13,14 @@ var arrayInstancias = [];
  * @param {string} identificador Identificador XXX para los tags
  */
 export function format(file, nombreEdar, identificador) {
-  readFile(file, nombreEdar, identificador)
+  readFile(file, nombreEdar, identificador);
 };
 
 /**
  * Función que comienza leyendo el fichero que nos proporcionan para recoger la información necesaria para formatear
- * @param {*} file 
- * @param {string} nombreEdar 
- * @param {string} identificador 
+ * @param {*} file
+ * @param {string} nombreEdar
+ * @param {string} identificador
  */
 async function readFile(file, nombreEdar, identificador) {
   const wb = new Excel.Workbook();
@@ -41,7 +41,8 @@ async function readFile(file, nombreEdar, identificador) {
           arrayProcesos.push({
             rowNumber: rowIndex,
             proceso: row.values[2],
-            numero: row.values[4]
+            descripcion: row.values[3],
+            numero: parseInt(row.values[4])
           });
         }
       });
@@ -82,8 +83,8 @@ async function readFile(file, nombreEdar, identificador) {
 
 /**
  * Función que con los datos obtenidos en la función anterior crea la lista de señales formateada
- * @param {string} nombreEdar 
- * @param {string} identificador 
+ * @param {string} nombreEdar
+ * @param {string} identificador
  */
 async function createFile(nombreEdar, identificador) {
   const workbook = new Excel.Workbook();
@@ -113,7 +114,7 @@ async function createFile(nombreEdar, identificador) {
       nombre: instancia.tag,
       tipo: instancia.tipoDato,
       grupo: 'Estación ' + proceso.numero,
-      descripcion: instancia.descripcion,
+      descripcion: instancia.descripcion + ' - ' + proceso.descripcion,
       offMsg: instancia.atributo === 'E_MARC' ? 'Paro' : (instancia.atributo === 'E_ABIE' || instancia.atributo === 'E_CERR' || instancia.atributo.substring(0, 4) === 'E_DI') ? 'No' : (instancia.tipoDato === 'DIGITAL' || instancia.atributo.substring(0, 2) === 'E_') ? 'Normal' : '',
       onMsg: instancia.atributo === 'E_MARC' ? 'Marcha' : (instancia.atributo === 'E_ABIE' || instancia.atributo === 'E_CERR' || instancia.atributo.substring(0, 4) === 'E_DI') ? 'Si' : (instancia.tipoDato === 'DIGITAL' || instancia.atributo.substring(0, 2) === 'E_') ? 'Alarma' : '',
       readOnly: 'Yes',
@@ -209,7 +210,7 @@ async function createFile(nombreEdar, identificador) {
     var url = URL.createObjectURL(data);
     a.href = url;
     const today = new Date();
-    a.download = 'ESAMUR - LS EDAR ' + nombreEdar + ' ' + today.getDate() + (today.getMonth() < 9 ? ('0' + (today.getMonth() + 1)) : (today.getMonth() + 1)) + today.getFullYear() + '.xlsx';
+    a.download = 'ESAMUR - LS EDAR ' + nombreEdar + ' ' + (today.getDate() < 10 ? ('0' + today.getDate()) : today.getDate()) + (today.getMonth() < 9 ? ('0' + (today.getMonth() + 1)) : (today.getMonth() + 1)) + today.getFullYear() + '.xlsx';
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -222,32 +223,29 @@ async function createFile(nombreEdar, identificador) {
   });
 };
 
-function checkVarCero() {
-  Object.entries(Plantillas).forEach(([plantilla, atributos]) => {
-    arrayInstancias.forEach((instancia) => {
-      if (instancia.instancia.substring(0, 4) === plantilla) {
-        atributos.forEach(atributo => {
-          if (arrayInstancias.findIndex(i => atributo === i.atributo && i.instancia.substring(0, 4) === plantilla) === -1) {
-            arrayInstancias.push({
-              automatico: instancia.automatico.substring(0, 12) + atributo,
-              descripcion: null,
-              agrupacion: instancia.agrupacion,
-              instancia: instancia.instancia,
-              atributo: atributo,
-              unidades: null,
-              tag: null,
-              tipoDato: null,
-              direccionPlc: null,
-              grupo: instancia.grupo,
-              estacion: instancia.estacion,
-              revisar: true,
-              minValue: null,
-              maxValue: null,
-              informacionSofrel: null,
-              varCero: 'VAR_0'
-            });
-          }
-        })
+async function checkVarCero() {
+  await arrayInstancias.forEach((instancia) => {
+    let atributos = Plantillas[instancia.instancia.substring(0, 4)];
+    atributos.forEach(atributo => {
+      if (arrayInstancias.findIndex(i => atributo === i.atributo && i.instancia === instancia.instancia && i.agrupacion === instancia.agrupacion) === -1) {
+        arrayInstancias.push({
+          automatico: instancia.automatico.substring(0, 12) + atributo,
+          descripcion: null,
+          agrupacion: instancia.agrupacion,
+          instancia: instancia.instancia,
+          atributo: atributo,
+          unidades: null,
+          tag: null,
+          tipoDato: null,
+          direccionPlc: null,
+          grupo: instancia.grupo,
+          estacion: instancia.estacion,
+          revisar: true,
+          minValue: null,
+          maxValue: null,
+          informacionSofrel: null,
+          varCero: 'VAR_0'
+        });
       }
     });
   });
