@@ -11,15 +11,15 @@ var arrayInfoCodificacion = [];
  * Función que exportamos para coger el fichero importado y proceder a leer y crear el nuevo fichero con las señales asociadas
  * @param {*} file Archivo que nos importan
  */
-export function associate(file, scer, scaa) {
-  readFile(file, scer, scaa);
+export function associate(file, scer, scaa, servicio, proceso, instalacion) {
+  readFile(file, scer, scaa, servicio, proceso, instalacion);
 };
 
 /**
  * Función para leer la información necesaria del fichero
  * @param {*} file
  */
-async function readFile(file, scer, scaa) {
+async function readFile(file, scer, scaa, servicio, proceso, instalacion) {
   const wb = new Excel.Workbook();
   const reader = new FileReader();
 
@@ -87,17 +87,18 @@ async function readFile(file, scer, scaa) {
             flagAlminh: row.values[48],
             flagClrinh: row.values[49],
             alarma: row.values[50],
-            flagEvtin: row.values[51],
-            flagCevin: row.values[52],
+            flagEvtinh: row.values[51],
+            flagCevinh: row.values[52],
             evento: row.values[53],
             historico: row.values[54],
-            // revisionColumnaFinal: row.values[68].result
+            signalToBeUnfoldedInput: (row.values[29] === undefined || row.values[30] === undefined) ? false : (row.values[29] === '' || row.values[30] === '') ? false : true,
+            signalToBeUnfoldedOutput: (row.values[29] === undefined || row.values[30] === undefined) ? false : (row.values[29] === '' || row.values[30] === '') ? false : true
           });
         }
       });
     })
     .then(() => {
-      createFile(scer,scaa);
+      createFile(scer,scaa, servicio, proceso, instalacion);
     });
   };
 };
@@ -106,7 +107,7 @@ async function readFile(file, scer, scaa) {
  * Función para crear un nuevo fichero con el mismo formato que la hoja de estación de EMASESA
  * y no tocar el original por si se quisiera revisar
  */
-async function createFile(scer, scaa) {
+async function createFile(scer, scaa, servicio, proceso, instalacion) {
   const workbook = new Excel.Workbook();
   // Añadimos una hoja al excel con el nombre Hoja 1
   const worksheet = workbook.addWorksheet('Hoja 1');
@@ -116,24 +117,19 @@ async function createFile(scer, scaa) {
 
   // Recorremos array de señales y lo añadimos al nuevo excel
   // Desdoblando, adecuando y rellenando lo que falta y se puede automatizar
-  arraySignals.forEach(signal => {
-    let signalToBeUnfolded = false;
-    if (signal.inbitBitdefZeroIospecExternal !== undefined && signal.inbitBitdefOneIospecExternal !== undefined) {
-      signalToBeUnfolded = true;
-    }
-
+  arraySignals.forEach((signal) => {
     worksheet.addRow({
       name: signal.name,
       rtu: signal.rtu,
       estacion: signal.estacion,
-      type: signalToBeUnfolded ? 'ANALOG' : signal.type,
+      type: signal.signalToBeUnfoldedInput || signal.signalToBeUnfoldedOutput ? 'ANALOG' : signal.type,
       description: getCleanedString(signal.description),
       iengrRawmin: signal.iengrRawmin,
       iengrRawmax: signal.iengrRawmax,
       iengrEgumin: signal.iengrEgumin,
       iengrEgumax: signal.iengrEgumax,
       iengrScaleraw: signal.iengrScaleraw,
-      units: signalToBeUnfolded ? 'ud' : (signal.units in Unidades) ? Unidades[signal.units] : signal.units,
+      units: signal.signalToBeUnfoldedInput || signal.signalToBeUnfoldedOutput ? 'ud' : (signal.units in Unidades) ? Unidades[signal.units] : signal.units,
       hilowDoit: signal.hilowDoit,
       hilowDoitdoit: signal.hilowDoitdoit,
       hilowDead: signal.hilowDead,
@@ -172,23 +168,24 @@ async function createFile(scer, scaa) {
       holdOffTimeout: signal.holdOffTimeout,
       flagAlminh: signal.flagAlminh,
       flagClrinh: signal.flagClrinh,
-      alarma: (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'no' : signalToBeUnfolded ? 'yes' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'no' : 'yes',
-      flagEvtin: signal.flagEvtin,
-      flagCevin: signal.flagCevin,
-      evento: (signal.name.substring(0, 2) == 'XE' && (signal.name.substring(signal.name.length - 2, signal.name.length) == 'EN' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'SI' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'ED' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'RS')) ? 'yes' : (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'yes' : signalToBeUnfolded ? 'no' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'yes' : 'no',
+      alarma: (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'no' : signal.signalToBeUnfolded ? 'yes' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'no' : 'yes',
+      flagEvtinh: signal.flagEvtinh,
+      flagCevinh: signal.flagCevinh,
+      evento: (signal.name.substring(0, 2) == 'XE' && (signal.name.substring(signal.name.length - 2, signal.name.length) == 'EN' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'SI' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'ED' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'RS')) ? 'yes' : (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'yes' : signal.signalToBeUnfolded ? 'no' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'yes' : 'no',
       historico: (signal.name.substring(0, 2) == 'ER') ? signal.historico : (signal.name.substring(0, 2) == 'XE' && (signal.name.substring(signal.name.length - 2, signal.name.length) == 'FR' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'FW' || signal.name.substring(signal.name.length - 2, signal.name.length) == 'TX')) ? 'yes' : (signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === '1' || signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === '1' || signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === '2' || signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === '3' || signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === '4' || signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === '6' || signal.name.substring(signal.estacion.split("_")[0].length, signal.estacion.split("_")[0].length + 1) === 'A') ? 'yes' : 'no',
       revisionColumnaFinal: signal.revisionColumnaFinal,
       scActivo: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scActivo + '01' : '',
-      scServicio: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scServicio : '',
-      scProceso: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scProceso : '',
-      scInstalacion: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scInstalacion : '',
+      scServicio: getServicio(signal, servicio),
+      scProceso: getProceso(signal, proceso),
+      scInstalacion: getInstalacion(signal, instalacion),
       scAtributo: getAtributo(signal),
-      scer: scer + '',
+      scer: scer,
       scaa: scaa
     });
 
     // Si hay que desdoblar la señal se añaden las dos nuevas
-    if (signalToBeUnfolded) {
+    // INPUT
+    if (signal.signalToBeUnfoldedInput) {
       // .1
       worksheet.addRow({
         name: signal.name + '.1',
@@ -246,9 +243,9 @@ async function createFile(scer, scaa) {
         historico: 'no',
         revisionColumnaFinal: signal.revisionColumnaFinal,
         scActivo: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scActivo + '01' : '',
-        scServicio: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scServicio : '',
-        scProceso: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scProceso : '',
-        scInstalacion: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scInstalacion : '',
+        scServicio: getServicio(signal, servicio),
+        scProceso: getProceso(signal, proceso),
+        scInstalacion: getInstalacion(signal, instalacion),
         scAtributo: getAtributo(signal),
         scer: scer,
         scaa: scaa
@@ -310,9 +307,138 @@ async function createFile(scer, scaa) {
         historico: 'no',
         revisionColumnaFinal: signal.revisionColumnaFinal,
         scActivo: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scActivo + '01' : '',
-        scServicio: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scServicio : '',
-        scProceso: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scProceso : '',
-        scInstalacion: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scInstalacion : '',
+        scServicio: getServicio(signal, servicio),
+        scProceso: getProceso(signal, proceso),
+        scInstalacion: getInstalacion(signal, instalacion),
+        scAtributo: getAtributo(signal),
+        scer: scer,
+        scaa: scaa
+      });
+    } else if (signal.signalToBeUnfoldedOutput) { // OUTPUT
+      // .1
+      worksheet.addRow({
+        name: signal.name + '.1',
+        rtu: signal.rtu,
+        estacion: signal.estacion,
+        type: signal.type,
+        description: getCleanedString(signal.description + ' ' + signal.outputCmdOne),
+        iengrRawmin: signal.iengrRawmin,
+        iengrRawmax: signal.iengrRawmax,
+        iengrEgumin: signal.iengrEgumin,
+        iengrEgumax: signal.iengrEgumax,
+        iengrScaleraw: signal.iengrScaleraw,
+        units: signal.units,
+        hilowDoit: signal.hilowDoit,
+        hilowDoitdoit: signal.hilowDoitdoit,
+        hilowDead: signal.hilowDead,
+        hilowLolim: signal.hilowLolim,
+        hilowHilim: signal.hilowHilim,
+        hilowLololim: signal.hilowLololim,
+        hilowHihilim: signal.hilowHihilim,
+        anainType: signal.anainType,
+        scale: signal.scale,
+        abnrmStateAlmZero: signal.abnrmStateAlmZero,
+        abnrmStateAlmOne: signal.abnrmStateAlmOne,
+        flagBmsg: signal.flagBmsg,
+        outputCmdZero: signal.outputCmdZero,
+        outputCmdTwo: signal.outputCmdOne === 'AUTOMÁTICO' || signal.outputCmdOne === 'MANUAL' || signal.outputCmdOne === 'AUTOMATICO' || signal.outputCmdOne === 'HABILITADO' || signal.outputCmdOne === 'ACTIVO' || signal.outputCmdOne === 'EN SERVICIO' || signal.outputCmdOne === 'LOCAL' ? 'NO ESTADO' : 'NO ' + signal.outputCmdOne,
+        outputCmdOne: signal.outputCmdOne,
+        outputCmdThree: signal.outputCmdThree,
+        anainIospecExternal: signal.anainIospecExternal,
+        inbitBitdefZeroIospecExternal: signal.inbitBitdefZeroIospecExternal,
+        inbitBitdefOneIospecExternal: signal.inbitBitdefOneIospecExternal,
+        accinIospecExternal: signal.accinIospecExternal,
+        anainIospecExternalTwo: signal.anainIospecExternalTwo,
+        input: signal.inbitBitdefZeroIospecExternal,
+        anaoutIospecExternal: signal.anaoutIospecExternal,
+        outsOneIospecExternal: signal.outsOneIospecExternal,
+        output: signal.output,
+        sustainCosAlarm: signal.sustainCosAlarm,
+        elemento: signal.elemento,
+        tipoElemento: signal.tipoElemento,
+        cotoutActivo: signal.cotoutActivo,
+        hilowDinamica: signal.hilowDinamica,
+        supressionType: signal.supressionType,
+        parentStrKey: signal.parentStrKey,
+        timeout: signal.timeout,
+        rtnAlmTimeout: signal.rtnAlmTimeout,
+        holdOffTimeout: signal.holdOffTimeout,
+        flagAlminh: signal.flagAlminh,
+        flagClrinh: signal.flagClrinh,
+        alarma: (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'no' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'no' : 'yes',
+        flagEvtin: signal.flagEvtin,
+        flagCevin: signal.flagCevin,
+        evento: (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'yes' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'yes' : 'no',
+        historico: 'no',
+        revisionColumnaFinal: signal.revisionColumnaFinal,
+        scActivo: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scActivo + '01' : '',
+        scServicio: getServicio(signal, servicio),
+        scProceso: getProceso(signal, proceso),
+        scInstalacion: getInstalacion(signal, instalacion),
+        scAtributo: getAtributo(signal),
+        scer: scer,
+        scaa: scaa
+      });
+      // .2
+      worksheet.addRow({
+        name: signal.name + '.2',
+        rtu: signal.rtu,
+        estacion: signal.estacion,
+        type: signal.type,
+        description: getCleanedString(signal.description + ' ' + signal.outputCmdTwo),
+        iengrRawmin: signal.iengrRawmin,
+        iengrRawmax: signal.iengrRawmax,
+        iengrEgumin: signal.iengrEgumin,
+        iengrEgumax: signal.iengrEgumax,
+        iengrScaleraw: signal.iengrScaleraw,
+        units: signal.units,
+        hilowDoit: signal.hilowDoit,
+        hilowDoitdoit: signal.hilowDoitdoit,
+        hilowDead: signal.hilowDead,
+        hilowLolim: signal.hilowLolim,
+        hilowHilim: signal.hilowHilim,
+        hilowLololim: signal.hilowLololim,
+        hilowHihilim: signal.hilowHihilim,
+        anainType: signal.anainType,
+        scale: signal.scale,
+        abnrmStateAlmZero: signal.abnrmStateAlmZero,
+        abnrmStateAlmOne: signal.abnrmStateAlmOne,
+        flagBmsg: signal.flagBmsg,
+        outputCmdZero: signal.outputCmdZero,
+        outputCmdTwo: signal.outputCmdOne === 'AUTOMÁTICO' || signal.outputCmdOne === 'MANUAL' || signal.outputCmdOne === 'AUTOMATICO' || signal.outputCmdOne === 'HABILITADO' || signal.outputCmdOne === 'ACTIVO' || signal.outputCmdOne === 'EN SERVICIO' || signal.outputCmdOne === 'LOCAL' ? 'NO ESTADO' : 'NO ' + signal.outputCmdTwo,
+        outputCmdOne: signal.outputCmdTwo,
+        outputCmdThree: signal.outputCmdThree,
+        anainIospecExternal: signal.anainIospecExternal,
+        inbitBitdefZeroIospecExternal: signal.inbitBitdefZeroIospecExternal,
+        inbitBitdefOneIospecExternal: signal.inbitBitdefOneIospecExternal,
+        accinIospecExternal: signal.accinIospecExternal,
+        anainIospecExternalTwo: signal.anainIospecExternalTwo,
+        input: signal.inbitBitdefOneIospecExternal,
+        anaoutIospecExternal: signal.anaoutIospecExternal,
+        outsOneIospecExternal: signal.outsTwoIospecExternal,
+        output: signal.output,
+        sustainCosAlarm: signal.sustainCosAlarm,
+        elemento: signal.elemento,
+        tipoElemento: signal.tipoElemento,
+        cotoutActivo: signal.cotoutActivo,
+        hilowDinamica: signal.hilowDinamica,
+        supressionType: signal.supressionType,
+        parentStrKey: signal.parentStrKey,
+        timeout: signal.timeout,
+        rtnAlmTimeout: signal.rtnAlmTimeout,
+        holdOffTimeout: signal.holdOffTimeout,
+        flagAlminh: signal.flagAlminh,
+        flagClrinh: signal.flagClrinh,
+        alarma: (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'no' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'no' : 'yes',
+        flagEvtin: signal.flagEvtin,
+        flagCevin: signal.flagCevin,
+        evento: (signal.flagAlminh === 'yes' && signal.flagClrinh === 'yes') ? 'yes' : (signal.type === 'DIGITAL' && signal.abnrmStateAlmOne === 'no' && signal.abnrmStateAlmZero === 'no') ? 'yes' : 'no',
+        historico: 'no',
+        revisionColumnaFinal: signal.revisionColumnaFinal,
+        scActivo: (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scActivo + '01' : '',
+        scServicio: getServicio(signal, servicio),
+        scProceso: getProceso(signal, proceso),
+        scInstalacion: getInstalacion(signal, instalacion),
         scAtributo: getAtributo(signal),
         scer: scer,
         scaa: scaa
@@ -360,4 +486,31 @@ function getAtributo(signal) {
                       : (signal.name.substring(0, 2) == 'XE' && signal.name.substring(signal.name.length - 2, signal.name.length) == 'SW') ? 'V_ECOR'
                         : (signal.name.substring(0, 2) == 'XE' && signal.name.substring(signal.name.length - 2, signal.name.length) == 'TX') ? 'V_TXBY'
                           : '';
+};
+
+function getServicio(signal, servicio) {
+  const serv = (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scServicio : '';
+  if (serv === 'SE') {
+    return servicio;
+  } else {
+    return serv;
+  }
+};
+
+function getProceso(signal, proceso) {
+  const proc = (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scProceso : '';
+  if (proc === 'PRO') {
+    return proceso;
+  } else {
+    return proc;
+  }
+};
+
+function getInstalacion(signal, instalacion) {
+  const inst = (signal.tipoElemento in Activos) ? Activos[signal.tipoElemento].scInstalacion : '';
+  if (inst === 'INS') {
+    return instalacion;
+  } else {
+    return inst;
+  }
 };

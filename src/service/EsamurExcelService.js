@@ -70,7 +70,6 @@ async function readFile(file, nombreEdar, identificador) {
           });
         }
       });
-      // console.table(arrayInstancias);
     }).then(() => {
       // Llamamos a la función que recorre el array de instancais para ver si falta algún atributo que apunte a VAR_0
       checkVarCero();

@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex justify-evenly items-center column">
-    <q-card class="my-card" style="width: 400px">
+    <q-card class="my-card" style="width: 680px">
       <q-card-section>
         <div class="text-h5">Asociar</div>
       </q-card-section>
@@ -10,13 +10,31 @@
           v-model.trim="areaActivo.val"
           label="Área Activo"
           class="flex q-px-md"
-          style="width: 150px"
+          style="width: 120px"
         />
         <q-input
           v-model.trim="codigoEstacion.val"
           label="Código Estación"
           class="flex q-px-md"
           style="width: 160px"
+        />
+        <q-input
+          v-model.trim="servicio.val"
+          label="Servicio"
+          class="flex q-px-md"
+          style="width: 110px"
+        />
+        <q-input
+          v-model.trim="proceso.val"
+          label="Proceso"
+          class="flex q-px-md"
+          style="width: 110px"
+        />
+        <q-input
+          v-model.trim="instalacion.val"
+          label="Instalación"
+          class="flex q-px-md"
+          style="width: 120px"
         />
         <q-file v-model="file.val" label="Seleccione fichero" style="width: 300px"/>
       </q-card-section>
@@ -25,7 +43,7 @@
         <q-btn class="btn" label="Asociar" @click="loadFile()" />
       </q-card-actions>
     </q-card>
-    <q-card class="my-card" style="width: 400px">
+    <q-card class="my-card" style="width: 680px">
       <q-card-section>
         <div class="text-h5">Formatear</div>
       </q-card-section>
@@ -56,6 +74,18 @@ export default {
         val: '',
         isValid: true,
       },
+      servicio: {
+        val: '',
+        isValid: true,
+      },
+      instalacion: {
+        val: '',
+        isValid: true,
+      },
+      proceso: {
+        val: '',
+        isValid: true,
+      },
       error: false,
     };
   },
@@ -76,6 +106,21 @@ export default {
       } else {
         this.codigoEstacion.isValid = true;
       }
+      if (this.instalacion.val === "") {
+        this.instalacion.isValid = false;
+      } else {
+        this.instalacion.isValid = true;
+      }
+      if (this.servicio.val === "") {
+        this.servicio.isValid = false;
+      } else {
+        this.servicio.isValid = true;
+      }
+      if (this.proceso.val === "") {
+        this.proceso.isValid = false;
+      } else {
+        this.proceso.isValid = true;
+      }
     },
     loadFile() {
       this.validateInputs();
@@ -95,7 +140,10 @@ export default {
           associate(
             this.file.val,
             this.codigoEstacion.val,
-            this.areaActivo.val
+            this.areaActivo.val,
+            this.servicio.val,
+            this.proceso.val,
+            this.instalacion.val
           );
         } catch (exception) {
           console.log(exception);
